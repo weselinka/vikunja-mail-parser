@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  vikunja-mail-parser:
+    image: weselinka/vikunja-mail-parser
+    container_name: vikunja-mail-parser
+    environment:
+      IMAP_SERVER: imap_server
+      EMAIL_ACCOUNT: imap_email_account
+      EMAIL_PASSWORD: imap_email_password
+      VIKUNJA_API_URL: https://my.vikunjaurl.com/api/v1
+      VIKUNJA_TOKEN: vikunja_token
+      PROJECT_MAPPING: '{"STRING_FOR_EMAIL_SUBJECT": "PROJECT_ID", "STRING_FOR_EMAIL_SUBJECT": "PROJECT_ID"}'
+    restart: unless-stopped
