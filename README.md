@@ -6,9 +6,8 @@ The parser is a simple Python 3 script that connects to an IMAP mail server usin
 
 A Docker container is provided for ease of use, but you can also run the script with a cron job (which is also set up in the Docker container).
 
-## Still work in progress (TODO)
-1. I plan to implement handling of file attachement so they are uploaded to vikunja to the created task.
-2. Remove the MAPPING from the task name when it is created.
+I have also implemented handling of file attachements from the emails (pdf,png,jpg).
+The script also removes the MAPPING tag from the task name.
 
 ## Example Usage for Cron Job
 
