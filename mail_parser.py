@@ -5,11 +5,7 @@ import requests
 import re
 import json
 import os
-import shutil
-
-from dotenv import load_dotenv
-
-load_dotenv('.env')
+from bs4 import BeautifulSoup
 
 # Load configuration from environment variables
 IMAP_SERVER = os.getenv('IMAP_SERVER')
@@ -49,20 +45,27 @@ def fetch_unread_emails(mail):
 def parse_email(msg):
     subject = ""
     body = ""
+    html_body = ""
     attachments = []
-    
-    # Decode email subject
+
+    # Decode subject
     if msg["subject"]:
-        subject, encoding = decode_header(msg["subject"])[0]
-        if isinstance(subject, bytes):
-            subject = subject.decode(encoding or "utf-8")
-    
-    # Extract email body and attachments
+        decoded_subject, encoding = decode_header(msg["subject"])[0]
+        if isinstance(decoded_subject, bytes):
+            subject = decoded_subject.decode(encoding or "utf-8")
+        else:
+            subject = decoded_subject
+
     if msg.is_multipart():
         for part in msg.walk():
-            if part.get_content_type() == "text/plain" and not part.get("Content-Disposition"):
-                body = part.get_payload(decode=True).decode()
-            elif part.get_content_disposition() and "attachment" in part.get_content_disposition():
+            content_type = part.get_content_type()
+            disposition = part.get("Content-Disposition")
+
+            if content_type == "text/plain" and disposition is None:
+                body = part.get_payload(decode=True).decode(part.get_content_charset() or "utf-8", errors="replace")
+            elif content_type == "text/html" and disposition is None:
+                html_body = part.get_payload(decode=True).decode(part.get_content_charset() or "utf-8", errors="replace")
+            elif disposition and "attachment" in disposition:
                 filename = part.get_filename()
                 if filename:
                     filepath = os.path.join(ATTACHMENT_DIR, filename)
@@ -70,9 +73,21 @@ def parse_email(msg):
                         f.write(part.get_payload(decode=True))
                     attachments.append(filepath)
     else:
-        body = msg.get_payload(decode=True).decode()
-    
-    return subject, body, attachments
+        content_type = msg.get_content_type()
+        if content_type == "text/plain":
+            body = msg.get_payload(decode=True).decode(msg.get_content_charset() or "utf-8", errors="replace")
+        elif content_type == "text/html":
+            html_body = msg.get_payload(decode=True).decode(msg.get_content_charset() or "utf-8", errors="replace")
+
+   # Prefer HTML as-is, since Vikunja supports it
+    if html_body:
+        body = html_body
+    else:
+       # fallback to plain text with line breaks converted to <br> for HTML rendering
+       body = body.replace("\r\n", "\n").replace("\r", "\n")
+       body = body.replace("\n", "<br>")
+    return subject.strip(), body.strip(), attachments
+
 
 def determine_project(subject):
     for keyword, project_id in PROJECT_MAPPING.items():
@@ -90,9 +105,8 @@ def create_vikunja_task(project_id, title, description):
     response = requests.put(url, json=payload, headers=headers)
     if response.status_code == 201:
         print(f"Task '{title}' created successfully in project ID {project_id}.")
-        print(f"TaskID:")
-        print(response.json().get("id"))
-        return response.json().get("id")  # Return the task ID for attachment upload
+        print(f"TaskID: {response.json().get('id')}")
+        return response.json().get("id")
     else:
         print(f"Failed to create task. Status: {response.status_code}, Response: {response.json()}")
         return None
@@ -101,7 +115,7 @@ def upload_task_attachments(task_id, attachments):
     url = f"{VIKUNJA_API_URL}/tasks/{task_id}/attachments"
     headers = {"Authorization": f"Bearer {VIKUNJA_TOKEN}"}
     files = [("files", (os.path.basename(filepath), open(filepath, "rb"))) for filepath in attachments]
-    
+
     try:
         response = requests.put(url, headers=headers, files=files)
         if response.status_code == 200:
@@ -109,7 +123,6 @@ def upload_task_attachments(task_id, attachments):
         else:
             print(f"Failed to upload attachments. Status: {response.status_code}, Response: {response.json()}")
     finally:
-        # Close file handlers
         for _, (_, file) in files:
             file.close()
 
@@ -124,7 +137,7 @@ def cleanup_attachments(attachments):
 def main():
     mail = connect_to_email()
     unread_emails = fetch_unread_emails(mail)
-    
+
     for num in unread_emails:
         status, data = mail.fetch(num, "(RFC822)")
         if status != "OK":
@@ -134,20 +147,19 @@ def main():
         msg = email.message_from_bytes(data[0][1])
         subject, body, attachments = parse_email(msg)
         print(f"Processing email with subject: {subject}")
-        
+
         project_id, keyword = determine_project(subject)
         if project_id:
-            # Remove project keyword from task title
             if keyword:
                 subject = re.sub(keyword, "", subject, flags=re.IGNORECASE).strip()
-            
+
             task_id = create_vikunja_task(project_id, subject, body)
             if task_id and attachments:
                 upload_task_attachments(task_id, attachments)
                 cleanup_attachments(attachments)
         else:
             print("No matching project found for email subject.")
-    
+
     mail.logout()
 
 if __name__ == "__main__":

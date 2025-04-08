@@ -1,22 +1,27 @@
-# Use an official Python runtime as a parent image
-FROM alpine:3.20 
+FROM python:3.12-alpine
 
-# Set the working directory in the container
 WORKDIR /app
 
-# Install cron and necessary dependencies
-RUN apk update && \
-    apk add libffi-dev && \
-    apk add gcc && \
-    apk add python3 && \
-    apk add py3-requests && \
-    apk add py3-pip 
+# Install curl, use it to install Supercronic, then remove curl
+ENV SUPERCRONIC_URL=https://github.com/aptible/supercronic/releases/download/v0.2.33/supercronic-linux-amd64 \
+    SUPERCRONIC_SHA1SUM=71b0d58cc53f6bd72cf2f293e09e294b79c666d8 \
+    SUPERCRONIC=supercronic-linux-amd64
 
-# Copy the current directory contents into the container at /app
-COPY mail-parser.py /app/
+RUN apk add --no-cache curl && \
+    curl -fsSLO "$SUPERCRONIC_URL" && \
+    echo "${SUPERCRONIC_SHA1SUM}  ${SUPERCRONIC}" | sha1sum -c - && \
+    chmod +x "$SUPERCRONIC" && \
+    mv "$SUPERCRONIC" "/usr/local/bin/${SUPERCRONIC}" && \
+    ln -s "/usr/local/bin/${SUPERCRONIC}" /usr/local/bin/supercronic && \
+    apk del curl  # remove curl to save space
 
-RUN echo "*/5 * * * * cd /app && /usr/bin/python3 /app/mail_parser.py >> /var/log/mail_parser.log 2>&1" >> /etc/crontabs/root
-RUN echo " " >> /etc/crontabs/root
+# Install Python dependencies
+RUN pip install --no-cache-dir requests beautifulsoup4
 
-# Run the script and keep the container running (via cron)
-CMD ["crond", "-f"]
+# Copy script and cronjob
+COPY mail_parser.py /app/
+RUN printf '*/5 * * * * /usr/local/bin/python /app/mail_parser.py\n' > /app/cronjob
+
+# Run Supercronic with your cron job
+CMD ["/usr/local/bin/supercronic", "/app/cronjob"]
+

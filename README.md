@@ -1,48 +1,67 @@
-# Email Parser for Vikunja.io
+# 📧 Email Parser for Vikunja
 
-This script creates tasks by sending an email using the Vikunja API.
+This script connects to your email inbox and automatically creates tasks in [Vikunja](https://vikunja.io) based on incoming emails.
 
-The parser is a simple Python 3 script that connects to an IMAP mail server using the provided credentials. It checks for unread emails with subjects containing the word `MAPPING`, which is defined in the environment variables. It then pairs these emails to a project ID and creates a task within that project. 
+- 💌 Reads unread emails via IMAP
+- 📬 Parses the subject line to determine the target Vikunja project
+- ✍️ Creates a new task with the email body as the task description
+- 📎 Supports file attachments (uploaded to the created task)
+- 🐳 Runs as a Docker container with cron (using Supercronic)
 
-A Docker container is provided for ease of use, but you can also run the script with a cron job (which is also set up in the Docker container).
+---
 
-I have also implemented handling of file attachements from the emails (pdf,png,jpg).
-The script also removes the MAPPING tag from the task name.
+## 🚀 How It Works
 
-## Example Usage for Cron Job
+The script scans your inbox for **unread emails**, checks if the subject matches any keyword in `PROJECT_MAPPING`, and creates a task in the matching Vikunja project.
 
-To run the script every 5 minutes, add the following to your crontab:
+For example, with this config:
 
-```shell
-*/5 * * * * /usr/bin/python3 /app/mail_parser.py >> /var/log/mail_parser.log 2>&1
+```env
+PROJECT_MAPPING='{"support": "3", "dev": "7"}'
 ```
 
-## Required Environment Variables
+- An email with subject: `Bug report - support` → creates a task in project ID **3**
+- An email with subject: `dev: add feature X` → creates a task in project ID **7**
 
-You must include the following environment variables:
+The matching keyword (`support`, `dev`) is **removed** from the task title.
 
-```shell
-IMAP_SERVER
-EMAIL_ACCOUNT
-EMAIL_PASSWORD
-VIKUNJA_API_URL
-VIKUNJA_TOKEN
-PROJECT_MAPPING
+---
+
+## 🛠 Required Environment Variables
+
+| Variable           | Example value                                  | Description |
+|--------------------|------------------------------------------------|-------------|
+| `IMAP_SERVER`      | `imap.gmail.com`                               | Your IMAP server hostname |
+| `EMAIL_ACCOUNT`    | `you@example.com`                              | The email address to check |
+| `EMAIL_PASSWORD`   | `app-password-123`                             | The password or app password |
+| `VIKUNJA_API_URL`  | `https://vikunja.example.com/api/v1`           | Base URL for the Vikunja API |
+| `VIKUNJA_TOKEN`    | `your-bearer-token`                            | Personal access token from Vikunja |
+| `PROJECT_MAPPING`  | `'{"support": "3", "dev": "7"}'`               | JSON object mapping subject keywords to project IDs |
+
+> 🔹 **What is a Vikunja Project ID?**  
+> You can find it by opening a project in Vikunja and checking the URL:  
+> `https://vikunja.example.com/projects/3/tasks` → the ID is **3**
+
+---
+
+## 🐳 Running in Docker
+
+```bash
+docker run -d \
+  --name vikunja-mail-parser \
+  -e IMAP_SERVER=imap.example.com \
+  -e EMAIL_ACCOUNT=you@example.com \
+  -e EMAIL_PASSWORD=yourpassword \
+  -e VIKUNJA_API_URL=https://vikunja.example.com/api/v1 \
+  -e VIKUNJA_TOKEN=your-vikunja-token \
+  -e PROJECT_MAPPING='{"support": "3", "dev": "7"}' \
+  --restart unless-stopped \
+  weselinka/vikunja-mail-parser
 ```
 
-Alternatively, you can edit the Python script to change these values directly.
+---
 
-## Running in a Docker Container
-
-To run the parser in a Docker container, use the following command:
-
-```shell
-docker run -d   --name vikunja-mail-parser   -e IMAP_SERVER=imap_server   -e EMAIL_ACCOUNT=imap_email_account   -e EMAIL_PASSWORD=imap_email_password   -e VIKUNJA_API_URL=https://my.vikunjaurl.com/api/v1   -e VIKUNJA_TOKEN=vikunja_token   -e PROJECT_MAPPING='{"STRING_FOR_EMAIL_SUBJECT": "PROJECT_ID", "STRING_FOR_EMAIL_SUBJECT": "PROJECT_ID"}'   --restart unless-stopped   weselinka/vikunja-mail-parser
-```
-
-### Docker Compose
-
-If you prefer using Docker Compose, you can use the following configuration:
+### 🐋 Docker Compose
 
 ```yaml
 version: '3.8'
@@ -52,28 +71,34 @@ services:
     image: weselinka/vikunja-mail-parser
     container_name: vikunja-mail-parser
     environment:
-      IMAP_SERVER: imap_server
-      EMAIL_ACCOUNT: imap_email_account
-      EMAIL_PASSWORD: imap_email_password
-      VIKUNJA_API_URL: https://my.vikunjaurl.com/api/v1
-      VIKUNJA_TOKEN: vikunja_token
-      PROJECT_MAPPING: '{"STRING_FOR_EMAIL_SUBJECT": "PROJECT_ID", "STRING_FOR_EMAIL_SUBJECT": "PROJECT_ID"}'
+      IMAP_SERVER: imap.example.com
+      EMAIL_ACCOUNT: you@example.com
+      EMAIL_PASSWORD: yourpassword
+      VIKUNJA_API_URL: https://vikunja.example.com/api/v1
+      VIKUNJA_TOKEN: your-vikunja-token
+      PROJECT_MAPPING: '{"support": "3", "dev": "7"}'
     restart: unless-stopped
 ```
+---
 
-### Building the Docker Container Locally
+## 🛠 Build the Docker Image Locally
 
-If you'd like to build the container yourself, you can do so from the `docker-compose-build.yml` file. After cloning the repository, run:
-
-```shell
-docker-compose --file docker-compose-build.yml up --build -d
+Download the project and inside the project directory run:
+```bash
+docker build -t weselinka/vikunja-mail-parser:latest .
 ```
 
-## Notes
+---
 
-- Make sure the `PROJECT_MAPPING` environment variable contains a dictionary that maps email subject strings to project IDs.
-- The script checks for unread emails and matches the subject to the mapping, creating tasks in the corresponding projects.
+## 💡 Notes
 
-## Contributions
+- Emails must be **unread** to be processed.
+- Attachments will be uploaded to the created task.
+- Tasks are created with the full email body (formatted with line breaks or HTML).
+- If no keyword in the subject matches `PROJECT_MAPPING`, the email is **MARKED READ** and ignored.
 
-Any comments or feature requests are welcome! However, please note that I cannot guarantee any feature implementation at this time.
+---
+
+## 🙌 Contributions
+
+Feature requests, issues, or PRs are welcome. Feel free to fork or suggest improvements!
