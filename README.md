@@ -37,6 +37,7 @@ The matching keyword (`support`, `dev`) is **removed** from the task title.
 | `VIKUNJA_API_URL`  | `https://vikunja.example.com/api/v1`           | Base URL for the Vikunja API |
 | `VIKUNJA_TOKEN`    | `your-bearer-token`                            | Personal access token from Vikunja |
 | `PROJECT_MAPPING`  | `'{"support": "3", "dev": "7"}'`               | JSON object mapping subject keywords to project IDs |
+| `IMAP_FOLDER`      | `inbox/todo`                                   | optional: IMAP Path to folder, default is `inbox` |
 
 > 🔹 **What is a Vikunja Project ID?**  
 > You can find it by opening a project in Vikunja and checking the URL:  
@@ -55,6 +56,7 @@ docker run -d \
   -e VIKUNJA_API_URL=https://vikunja.example.com/api/v1 \
   -e VIKUNJA_TOKEN=your-vikunja-token \
   -e PROJECT_MAPPING='{"support": "3", "dev": "7"}' \
+  -e IMAP_FOLDER='inbox' \
   --restart unless-stopped \
   weselinka/vikunja-mail-parser
 ```
@@ -77,6 +79,7 @@ services:
       VIKUNJA_API_URL: https://vikunja.example.com/api/v1
       VIKUNJA_TOKEN: your-vikunja-token
       PROJECT_MAPPING: '{"support": "3", "dev": "7"}'
+      IMAP_FOLDER: 'inbox'
     restart: unless-stopped
 ```
 ---

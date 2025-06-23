@@ -11,4 +11,5 @@ services:
       VIKUNJA_API_URL: https://my.vikunjaurl.com/api/v1
       VIKUNJA_TOKEN: vikunja_token
       PROJECT_MAPPING: '{"STRING_FOR_EMAIL_SUBJECT": "PROJECT_ID", "STRING_FOR_EMAIL_SUBJECT": "PROJECT_ID"}'
+      IMAP_PATH: 'inbox'
     restart: unless-stopped
