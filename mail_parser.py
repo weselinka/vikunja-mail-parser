@@ -17,15 +17,15 @@ VIKUNJA_TOKEN = os.getenv('VIKUNJA_TOKEN')
 # Load PROJECT_MAPPING from environment variables
 project_mapping_str = os.getenv('PROJECT_MAPPING')
 
+# Load IMAP_PATH from environment variables
+imap_path_str = os.getenv('IMAP_PATH')
+
 # If PROJECT_MAPPING is defined, parse it; otherwise, use an empty dictionary
 if project_mapping_str:
     PROJECT_MAPPING = json.loads(project_mapping_str)
 else:
     print("No Projects mapped, check config of env")
     PROJECT_MAPPING = {}
-
-# Load IMAP_PATH from environment variables
-imap_path_str = os.getenv('IMAP_PATH')
 
 # If IMAP_PATH is defined, parse it; otherwise, use an empty string
 if imap_path_str:    
@@ -111,7 +111,7 @@ def create_vikunja_task(project_id, title, description):
         "title": title,
         "description": description,
     }
-    print(payload)
+
     response = requests.put(url, json=payload, headers=headers)
     if response.status_code == 201:
         print(f"Task '{title}' created successfully in project ID {project_id}.")
