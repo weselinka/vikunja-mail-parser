@@ -38,6 +38,7 @@ The matching keyword (`support`, `dev`) is **removed** from the task title.
 | `VIKUNJA_TOKEN`    | `your-bearer-token`                            | Personal access token from Vikunja |
 | `PROJECT_MAPPING`  | `'{"support": "3", "dev": "7"}'`               | JSON object mapping subject keywords to project IDs |
 | `IMAP_FOLDER`      | `inbox/todo`                                   | optional: IMAP Path to folder, default is `inbox` |
+| `DEFAULT_PROJECT`  | `1`                                            | optional: Project ID to put any email into (useful only with an IMAP Folder set) |
 
 > 🔹 **What is a Vikunja Project ID?**  
 > You can find it by opening a project in Vikunja and checking the URL:  

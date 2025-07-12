@@ -17,6 +17,12 @@ VIKUNJA_TOKEN = os.getenv('VIKUNJA_TOKEN')
 # Load PROJECT_MAPPING from environment variables
 project_mapping_str = os.getenv('PROJECT_MAPPING')
 
+# Load IMAP_PATH from environment variables
+imap_path_str = os.getenv('IMAP_PATH')
+
+# Load DEFAULT_PROJECT from environment variables
+default_project = os.getenv('DEFAULT_PROJECT')
+
 # If PROJECT_MAPPING is defined, parse it; otherwise, use an empty dictionary
 if project_mapping_str:
     PROJECT_MAPPING = json.loads(project_mapping_str)
@@ -24,14 +30,17 @@ else:
     print("No Projects mapped, check config of env")
     PROJECT_MAPPING = {}
 
-# Load IMAP_PATH from environment variables
-imap_path_str = os.getenv('IMAP_PATH')
-
 # If IMAP_PATH is defined, parse it; otherwise, use an empty string
 if imap_path_str:    
     IMAP_PATH = imap_path_str
 else:    
     IMAP_PATH = "inbox"
+
+# If DEFAULT_PROJECT is defined, parse it; otherwise, use an empty string
+if imap_path_str:    
+    DEFAULT_PROJECT = default_project
+else:    
+    DEFAULT_PROJECT = ""
 
 ATTACHMENT_DIR = 'attachments'
 
@@ -111,7 +120,7 @@ def create_vikunja_task(project_id, title, description):
         "title": title,
         "description": description,
     }
-    print(payload)
+
     response = requests.put(url, json=payload, headers=headers)
     if response.status_code == 201:
         print(f"Task '{title}' created successfully in project ID {project_id}.")
@@ -169,6 +178,14 @@ def main():
                 cleanup_attachments(attachments)
         else:
             print("No matching project found for email subject.")
+            if DEFAULT_PROJECT:
+                project_id = DEFAULT_PROJECT
+                task_id = create_vikunja_task(project_id, subject, body)
+                if task_id and attachments:
+                    upload_task_attachments(task_id, attachments)
+                    cleanup_attachments(attachments)
+            else:
+                print("No default project ID configured. Skipping email.")
 
     mail.logout()
 
