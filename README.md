@@ -42,8 +42,8 @@ The matching keyword (`support`, `dev`) is **removed** from the task title.
 
 | Variable           | Example value                                  | Description |
 |--------------------|------------------------------------------------|-------------|
-| `IMAP_FOLDER`      | `inbox/todo`                                   | optional: IMAP Path to folder, default is `inbox` |
-| `DEFAULT_PROJECT`  | `1`                                            | optional: Project ID to put any email into (useful only with an IMAP Folder set) |
+| `IMAP_FOLDER`      | `inbox/todo`                                   | IMAP Path to folder, default is `inbox` |
+| `DEFAULT_PROJECT`  | `1`                                            | Project ID to put any email into (useful only with an IMAP Folder set) |
 
 > 🔹 **What is a Vikunja Project ID?**  
 > You can find it by opening a project in Vikunja and checking the URL:  
