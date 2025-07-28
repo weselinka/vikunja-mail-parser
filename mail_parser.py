@@ -37,7 +37,7 @@ else:
     IMAP_PATH = "inbox"
 
 # If DEFAULT_PROJECT is defined, parse it; otherwise, use an empty string
-if imap_path_str:    
+if default_project:    
     DEFAULT_PROJECT = default_project
 else:    
     DEFAULT_PROJECT = ""
