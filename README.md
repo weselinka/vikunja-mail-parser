@@ -37,7 +37,13 @@ The matching keyword (`support`, `dev`) is **removed** from the task title.
 | `VIKUNJA_API_URL`  | `https://vikunja.example.com/api/v1`           | Base URL for the Vikunja API |
 | `VIKUNJA_TOKEN`    | `your-bearer-token`                            | Personal access token from Vikunja |
 | `PROJECT_MAPPING`  | `'{"support": "3", "dev": "7"}'`               | JSON object mapping subject keywords to project IDs |
-| `IMAP_FOLDER`      | `inbox/todo`                                   | optional: IMAP Path to folder, default is `inbox` |
+
+## 🛠 Optional Environment Variables
+
+| Variable           | Example value                                  | Description |
+|--------------------|------------------------------------------------|-------------|
+| `IMAP_FOLDER`      | `inbox/todo`                                   | IMAP Path to folder, default is `inbox` |
+| `DEFAULT_PROJECT`  | `1`                                            | Project ID to put any email into (useful only with an IMAP Folder set) |
 
 > 🔹 **What is a Vikunja Project ID?**  
 > You can find it by opening a project in Vikunja and checking the URL:  
