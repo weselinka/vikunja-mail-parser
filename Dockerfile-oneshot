@@ -1,0 +1,13 @@
+FROM python:3.12-alpine
+
+WORKDIR /app
+
+# Install Python dependencies
+RUN pip install --no-cache-dir requests beautifulsoup4
+
+# Copy script and cronjob
+COPY mail_parser.py /app/
+
+# Run the python script
+CMD ["python", "mail_parser.py"]
+
