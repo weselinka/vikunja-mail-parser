@@ -1,3 +1,4 @@
+
 # 📧 Email Parser for Vikunja
 
 This script connects to your email inbox and automatically creates tasks in [Vikunja](https://vikunja.io) based on incoming emails.
@@ -7,6 +8,7 @@ This script connects to your email inbox and automatically creates tasks in [Vik
 - ✍️ Creates a new task with the email body as the task description
 - 📎 Supports file attachments (uploaded to the created task)
 - 🐳 Runs as a Docker container with cron (using Supercronic)
+- 🐳 Can be run as a job Docker container
 
 ---
 
@@ -45,27 +47,31 @@ The matching keyword (`support`, `dev`) is **removed** from the task title.
 | `IMAP_FOLDER`      | `inbox/todo`                                   | IMAP Path to folder, default is `inbox` |
 | `DEFAULT_PROJECT`  | `1`                                            | Project ID to put any email into (useful only with an IMAP Folder set) |
 
-> 🔹 **What is a Vikunja Project ID?**  
-> You can find it by opening a project in Vikunja and checking the URL:  
+> 🔹 **What is a Vikunja Project ID?**
+> You can find it by opening a project in Vikunja and checking the URL:
 > `https://vikunja.example.com/projects/3/tasks` → the ID is **3**
 
 ---
 
 ## 🐳 Running in Docker
 
+### With Cron (default):
+
 ```bash
-docker run -d \
-  --name vikunja-mail-parser \
-  -e IMAP_SERVER=imap.example.com \
-  -e EMAIL_ACCOUNT=you@example.com \
-  -e EMAIL_PASSWORD=yourpassword \
-  -e VIKUNJA_API_URL=https://vikunja.example.com/api/v1 \
-  -e VIKUNJA_TOKEN=your-vikunja-token \
-  -e PROJECT_MAPPING='{"support": "3", "dev": "7"}' \
-  -e IMAP_FOLDER='inbox' \
-  --restart unless-stopped \
-  weselinka/vikunja-mail-parser
+docker run -d   --name vikunja-mail-parser   -e IMAP_SERVER=imap.example.com   -e EMAIL_ACCOUNT=you@example.com   -e EMAIL_PASSWORD=yourpassword   -e VIKUNJA_API_URL=https://vikunja.example.com/api/v1   -e VIKUNJA_TOKEN=your-vikunja-token   -e PROJECT_MAPPING='{"support": "3", "dev": "7"}'   -e IMAP_FOLDER='inbox'   --restart unless-stopped   weselinka/vikunja-mail-parser
 ```
+
+### Without Cron (Oneshot):
+
+There also is a container `weselinka/vikunja-mail-parser:oneshot` that runs the script just once, without using cron.
+
+To run the oneshot version of the container:
+
+```bash
+docker run --rm   -e IMAP_SERVER=imap.example.com   -e EMAIL_ACCOUNT=you@example.com   -e EMAIL_PASSWORD=yourpassword   -e VIKUNJA_API_URL=https://vikunja.example.com/api/v1   -e VIKUNJA_TOKEN=your-vikunja-token   -e PROJECT_MAPPING='{"support": "3", "dev": "7"}'   -e IMAP_FOLDER='inbox'   weselinka/vikunja-mail-parser:oneshot
+```
+
+This will execute the script once and exit, without scheduling future runs.
 
 ---
 
@@ -111,3 +117,4 @@ docker build -t weselinka/vikunja-mail-parser:latest .
 ## 🙌 Contributions
 
 Feature requests, issues, or PRs are welcome. Feel free to fork or suggest improvements!
+
